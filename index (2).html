@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jeri Brazil | Performance</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0f0f0e;
+  --surface:#1a1a19;
+  --surface-2:#222221;
+  --line:#2c2c2a;
+  --text:#f0efec;
+  --text-2:#c3c2b7;
+  --text-3:#8d8c84;
+  --s1:#3987e5;   /* azul: valor principal */
+  --s2:#d95926;   /* laranja: comparação / média */
+  --s3:#199e70;   /* aqua: recuperação */
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 64px}
+header{position:sticky;top:0;z-index:20;background:rgba(15,15,14,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hd{max-width:1180px;margin:0 auto;padding:14px 16px 10px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
+.brand span{color:var(--text-3);font-size:13px}
+.upd{display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(12,163,12,.18)}
+.dot.old{background:var(--warn);box-shadow:0 0 0 3px rgba(250,178,25,.18)}
+.dot.err{background:var(--crit);box-shadow:0 0 0 3px rgba(208,59,59,.18)}
+button{font:inherit;color:inherit}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--text-2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:#44443f;color:var(--text)}
+.bar{max-width:1180px;margin:0 auto;padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.tabs,.presets{display:flex;gap:4px;flex-wrap:wrap}
+.tab,.pre{background:transparent;border:1px solid transparent;color:var(--text-3);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:14px}
+.tab:hover,.pre:hover{color:var(--text);background:var(--surface)}
+.tab[aria-selected=true]{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+.pre{font-size:13px;padding:6px 11px}
+.pre[aria-pressed=true]{background:var(--s1);color:#fff}
+.pre[aria-pressed=true]:hover{background:var(--s1)}
+.range{color:var(--text-3);font-size:12.5px;padding:10px 0 0}
+.range b{color:var(--text-2);font-weight:600}
+section.blk{margin-top:22px}
+h2{font-size:13px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin:0 0 10px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.kpi .l{color:var(--text-3);font-size:13px}
+.kpi .v{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:4px 0 2px;line-height:1.15}
+.kpi .d{font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--text-3)}
+.kpi .sub{font-size:12.5px;color:var(--text-3);margin-top:2px}
+.chg{font-weight:600;display:inline-flex;gap:3px;align-items:center}
+.chg.good{color:#3fcf5e}.chg.bad{color:#ff7a6b}.chg.flat{color:var(--text-3)}
+.two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+.ch h3{margin:0 0 2px;font-size:15px;font-weight:600}
+.ch p{margin:0 0 8px;color:var(--text-3);font-size:12.5px}
+.leg{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 4px;font-size:12.5px;color:var(--text-2)}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.leg i.ln{height:2px;width:14px;border-radius:2px;vertical-align:3px}
+.plot{position:relative;width:100%}
+.plot svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;z-index:5;background:#0c0c0b;border:1px solid #3a3a37;border-radius:8px;padding:8px 10px;font-size:12.5px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;transition:opacity .08s}
+.tip b{display:block;margin-bottom:4px;color:var(--text)}
+.tip div{display:flex;justify-content:space-between;gap:14px;color:var(--text-2)}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.tip span:last-child{color:var(--text);font-variant-numeric:tabular-nums}
+.alerts{display:grid;gap:8px}
+.al{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.al .ic{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#0f0f0e;margin-top:1px}
+.al.warn .ic{background:var(--warn)}.al.crit .ic{background:var(--crit);color:#fff}.al.ok .ic{background:var(--good);color:#fff}
+.al small{display:block;color:var(--text-3);margin-top:2px;font-size:12.5px}
+.tw{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child,td.tl,th.tl{text-align:left}
+thead th{position:sticky;top:0;background:var(--surface-2);color:var(--text-3);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;z-index:1}
+td{font-variant-numeric:tabular-nums;color:var(--text-2)}
+tbody tr:hover td{background:rgba(255,255,255,.03)}
+tr.tot td{font-weight:650;color:var(--text);background:var(--surface-2)}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--text-3);font-size:13px;padding:4px 0}
+summary:hover{color:var(--text)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line);color:var(--text-2)}
+.pill.pix{border-color:rgba(57,135,229,.5);color:#8fbcf2}.pill.card{border-color:rgba(217,89,38,.55);color:#f0a283}
+.pill.wa{border-color:rgba(25,158,112,.55);color:#6fd3ae}
+.note{color:var(--text-3);font-size:12.5px;margin-top:10px}
+.state{padding:60px 16px;text-align:center;color:var(--text-3)}
+.state h3{color:var(--text);margin:0 0 6px}
+.skel{height:92px;border-radius:12px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface-2) 50%,var(--surface) 75%);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+footer{margin-top:36px;color:var(--text-3);font-size:12.5px;text-align:center}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="brand"><h1>Jeri Brazil</h1><span>Performance de e-commerce</span></div>
+    <div class="upd"><span class="dot" id="dot"></span><span id="updtxt">Carregando…</span><button class="btn" id="refresh" type="button">Atualizar</button></div>
+  </div>
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="geral">Visão geral</button>
+      <button class="tab" role="tab" data-tab="pix">Pix</button>
+      <button class="tab" role="tab" data-tab="recusados">Recusados</button>
+      <button class="tab" role="tab" data-tab="recuperacao">Recuperação</button>
+    </div>
+    <div class="presets" id="presets">
+      <button class="pre" data-p="7d">7 dias</button>
+      <button class="pre" data-p="14d">14 dias</button>
+      <button class="pre" data-p="30d">30 dias</button>
+      <button class="pre" data-p="mes">Este mês</button>
+      <button class="pre" data-p="mespassado">Mês passado</button>
+      <button class="pre" data-p="tudo">Tudo</button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="range" id="range"></div>
+  <main id="main"><div class="grid" style="margin-top:22px"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></main>
+  <footer>Fonte: Yampi (pedidos e carrinhos), atualizado automaticamente a cada hora. Valores em reais, fuso de Fortaleza. Somente pagamentos confirmados entram em vendas.</footer>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyoz6yO6m0OqMjLPEKFS1uPeWuMeWTDh6jxQRo3x-d0sILtrfJRKTuwly0wkZG-bpfW/exec';
+const CORES = {s1:'#3987e5', s2:'#d95926', s3:'#199e70'};
+const $ = s => document.querySelector(s);
+
+/* ---------- formatação ---------- */
+const nf0 = new Intl.NumberFormat('pt-BR', {maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat('pt-BR', {maximumFractionDigits:1, minimumFractionDigits:1});
+const brl0 = n => 'R$ ' + nf0.format(Math.round(n || 0));
+const brl2 = n => (n || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const int = n => nf0.format(Math.round(n || 0));
+const pct = n => (isFinite(n) ? nf1.format(n * 100) : '0,0') + '%';
+const ddmm = s => s.slice(8, 10) + '/' + s.slice(5, 7);
+const ddmmyy = s => ddmm(s) + '/' + s.slice(2, 4);
+const compact = n => { const f = (x, u) => (Math.abs(x - Math.round(x)) < 0.05 ? nf0.format(Math.round(x)) : nf1.format(x)) + u; return n >= 1e6 ? f(n / 1e6, ' mi') : n >= 1e3 ? f(n / 1e3, ' mil') : nf0.format(Math.round(n)); };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- datas ---------- */
+const ymd = d => d.toISOString().slice(0, 10);
+const addD = (s, n) => ymd(new Date(Date.parse(s + 'T00:00:00Z') + n * 864e5));
+const diffD = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 864e5);
+const daysIn = (s, e) => { const o = []; for (let d = s; d <= e; d = addD(d, 1)) o.push(d); return o; };
+const monthStart = s => s.slice(0, 8) + '01';
+const prevMonthStart = s => monthStart(addD(monthStart(s), -1));
+
+/* ---------- dados ---------- */
+let D = null;                 // dados normalizados
+const S = { tab: 'geral', p: '30d' };
+const NUM = ['carrinhos_abandonados','valor_carrinhos','recuperados','valor_recuperado','pix_gerado','pix_pago','pix_valor_perdido','cartao_recusado','valor_cartao_recusado','recuperados_whatsapp','valor_recuperado_whatsapp','vendas_whatsapp_yampi','valor_vendas_whatsapp_yampi','pedidos_pagos','valor_pago'];
+
+function normalizar(raw) {
+  const idx = {};
+  (raw.resumo_diario || []).forEach(r => {
+    const o = { dia: String(r.dia).slice(0, 10) };
+    NUM.forEach(k => o[k] = +r[k] || 0);
+    idx[o.dia] = o;
+  });
+  const dias = Object.keys(idx).sort();
+  const rec = (raw.recuperacao || []).map(r => ({
+    criado: String(r.criado).slice(0, 10), valor_carrinho: +r.valor_carrinho || 0, metodo: r.metodo,
+    emails: +r.emails_recuperacao || 0, recuperado: +r.recuperado ? 1 : 0, pedido: r.pedido,
+    valor_pedido: +r.valor_pedido || 0, dias: r.dias_ate_compra, canal: r.canal || ''
+  }));
+  const rf = (raw.recusados || []).map(r => ({
+    origem: r.origem, id: r.id, criado: String(r.criado).slice(0, 10), valor: +r.valor || 0,
+    metodo: r.metodo, motivo: String(r.motivo || '')
+  }));
+  return { atualizado: raw.atualizado, idx, dias, primeiro: dias[0], rec, rf };
+}
+const row = d => D.idx[d];
+const val = (d, k) => (D.idx[d] ? D.idx[d][k] : 0);
+
+function agg(s, e) {
+  const t = {}; NUM.forEach(k => t[k] = 0);
+  daysIn(s, e).forEach(d => { const r = D.idx[d]; if (r) NUM.forEach(k => t[k] += r[k]); });
+  t.ticket = t.pedidos_pagos ? t.valor_pago / t.pedidos_pagos : 0;
+  t.conv_pix = t.pix_gerado ? t.pix_pago / t.pix_gerado : 0;
+  t.taxa_rec = t.carrinhos_abandonados ? t.recuperados / t.carrinhos_abandonados : 0;
+  return t;
+}
+
+/* ---------- período ---------- */
+function hojeFortaleza() { return ymd(new Date(Date.parse(D.atualizado) - 3 * 36e5)); }
+function periodo() {
+  const hoje = hojeFortaleza(), fim = addD(hoje, -1);            // só dias completos
+  let s, e = fim, ps = null, pe = null, nome = '';
+  const n = { '7d': 7, '14d': 14, '30d': 30 }[S.p];
+  if (n) { s = addD(fim, -(n - 1)); pe = addD(s, -1); ps = addD(pe, -(n - 1)); }
+  else if (S.p === 'mes') {
+    s = monthStart(hoje);
+    if (s > fim) { s = prevMonthStart(hoje); e = addD(monthStart(hoje), -1); }
+    const N = diffD(s, e) + 1; ps = prevMonthStart(s); pe = addD(ps, N - 1);
+    if (pe >= s) pe = addD(s, -1);
+  } else if (S.p === 'mespassado') {
+    s = prevMonthStart(hoje); e = addD(monthStart(hoje), -1);
+    const N = diffD(s, e) + 1; ps = prevMonthStart(s); pe = addD(ps, N - 1);
+    if (pe >= s) pe = addD(s, -1);
+  } else { s = D.primeiro; }
+  if (s < D.primeiro) s = D.primeiro;
+  if (ps && pe < D.primeiro) { ps = pe = null; }
+  else if (ps && ps < D.primeiro) ps = D.primeiro;
+  return { s, e, ps, pe, n: diffD(s, e) + 1, hoje };
+}
+
+/* ---------- deltas ---------- */
+function delta(cur, prev, { bom = 'up', tipo = 'pct', fmt } = {}) {
+  if (prev == null) return '';
+  let txt, dir;
+  if (tipo === 'pp') { const dd = (cur - prev) * 100; dir = Math.abs(dd) < 0.05 ? 0 : dd > 0 ? 1 : -1; txt = (dd > 0 ? '+' : '') + nf1.format(dd) + ' p.p.'; }
+  else {
+    if (!prev) return cur ? '<span class="chg flat">novo</span><span>vs período anterior</span>' : '';
+    const dd = (cur - prev) / prev; dir = Math.abs(dd) < 0.0005 ? 0 : dd > 0 ? 1 : -1; txt = (dd > 0 ? '+' : '') + nf1.format(dd * 100) + '%';
+  }
+  const cls = dir === 0 ? 'flat' : ((dir > 0) === (bom === 'up') ? 'good' : 'bad');
+  const seta = dir === 0 ? '→' : dir > 0 ? '▲' : '▼';
+  return `<span class="chg ${cls}">${seta} ${txt}</span><span>${fmt ? 'antes ' + fmt(prev) : 'vs período anterior'}</span>`;
+}
+function kpi(label, valor, cur, prev, o = {}) {
+  return `<div class="card kpi"><div class="l">${label}</div><div class="v">${valor}</div>
+  <div class="d">${prev == null ? '' : delta(cur, prev, o)}</div>${o.sub ? `<div class="sub">${o.sub}</div>` : ''}</div>`;
+}
+
+/* ---------- gráfico SVG ---------- */
+let CHARTS = [];
+function niceMax(m) {
+  if (m <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p;
+  const n = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+  return n * p;
+}
+function chart(id, cfg) {                       // registra; desenha depois que o HTML entra na página
+  CHARTS.push({ id, cfg });
+  const leg = cfg.series.length > 1 ? `<div class="leg">${cfg.series.map(s => `<span><i class="${s.type === 'line' ? 'ln' : ''}" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '';
+  return `<div class="card ch"><h3>${esc(cfg.title)}</h3>${cfg.sub ? `<p>${esc(cfg.sub)}</p>` : ''}${leg}<div class="plot" id="${id}"></div></div>`;
+}
+function draw(id, cfg) {
+  const host = document.getElementById(id); if (!host) return;
+  const W = Math.max(280, host.clientWidth), H = cfg.h || 230, m = { l: 48, r: 10, t: 8, b: 26 };
+  const L = cfg.labels, n = L.length, iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / n;
+  let mx = 0; cfg.series.forEach(s => s.vals.forEach(v => { if (v != null && v > mx) mx = v; }));
+  const top = cfg.pct ? Math.max(0.2, Math.min(1, niceMax(mx * 1.05))) : niceMax(mx * 1.04);
+  const y = v => m.t + ih - (v / top) * ih;
+  const bars = cfg.series.filter(s => s.type === 'bar'), k = bars.length;
+  const barW = k ? Math.max(1.5, Math.min(24, (bw * 0.78 - (k - 1) * 2) / k)) : 0, gW = k * barW + (k - 1) * 2;
+  let g = '';
+  for (let i = 0; i <= 4; i++) {
+    const v = top * i / 4, yy = y(v);
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="#2c2c2a" stroke-width="1"/>`;
+    g += `<text x="${m.l - 8}" y="${yy + 4}" text-anchor="end" font-size="11" fill="#8d8c84">${cfg.yfmt(v)}</text>`;
+  }
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 58))));
+  L.forEach((l, i) => { if (i % every === 0 || i === n - 1 && (n - 1) % every > every / 2) g += `<text x="${m.l + i * bw + bw / 2}" y="${H - 7}" text-anchor="middle" font-size="11" fill="#8d8c84">${ddmm(l)}</text>`; });
+  bars.forEach((s, bi) => s.vals.forEach((v, i) => {
+    if (!(v > 0)) return;
+    const x = m.l + i * bw + (bw - gW) / 2 + bi * (barW + 2), yy = y(v), h = m.t + ih - yy, r = Math.min(4, barW / 2, h);
+    g += `<path d="M${x},${yy + h} L${x},${yy + r} Q${x},${yy} ${x + r},${yy} L${x + barW - r},${yy} Q${x + barW},${yy} ${x + barW},${yy + r} L${x + barW},${yy + h} Z" fill="${s.color}"/>`;
+  }));
+  cfg.series.filter(s => s.type === 'line').forEach(s => {
+    let d = '', ult = null;
+    s.vals.forEach((v, i) => { if (v == null) return; const x = m.l + i * bw + bw / 2; d += (d ? 'L' : 'M') + x + ',' + y(v); ult = [x, y(v)]; });
+    g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (ult) g += `<circle cx="${ult[0]}" cy="${ult[1]}" r="4" fill="${s.color}" stroke="#1a1a19" stroke-width="2"/>`;
+  });
+  g += `<line id="${id}-x" y1="${m.t}" y2="${m.t + ih}" stroke="#8d8c84" stroke-width="1" opacity="0"/>`;
+  g += `<rect id="${id}-hit" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(cfg.title)}">${g}</svg><div class="tip" id="${id}-t"></div>`;
+  const hit = host.querySelector(`#${id}-hit`), xl = host.querySelector(`#${id}-x`), tip = host.querySelector(`#${id}-t`);
+  const move = ev => {
+    const rc = host.getBoundingClientRect(), px = (ev.clientX - rc.left) * (W / rc.width);
+    const i = Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / bw)));
+    const cx = m.l + i * bw + bw / 2; xl.setAttribute('x1', cx); xl.setAttribute('x2', cx); xl.setAttribute('opacity', '.5');
+    tip.innerHTML = `<b>${ddmmyy(L[i])}</b>` + cfg.series.map(s => s.vals[i] == null ? '' : `<div><span><i style="background:${s.color}"></i>${esc(s.name)}</span><span>${(s.fmt || cfg.yfmt)(s.vals[i])}</span></div>`).join('');
+    const tw = tip.offsetWidth, sx = cx * (rc.width / W);
+    tip.style.left = Math.max(0, Math.min(rc.width - tw, sx + 12 > rc.width - tw ? sx - tw - 12 : sx + 12)) + 'px';
+    tip.style.top = '6px'; tip.style.opacity = 1;
+  };
+  hit.addEventListener('pointermove', move); hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', () => { xl.setAttribute('opacity', 0); tip.style.opacity = 0; });
+}
+function drawAll() { CHARTS.forEach(c => draw(c.id, c.cfg)); }
+
+/* ---------- séries ---------- */
+function serie(s, e, f) { return daysIn(s, e).map(d => f(d)); }
+function mm7(d, num, den) {                     // média móvel de 7 dias (usa dias anteriores ao período)
+  let a = 0, b = 0;
+  for (let i = 0; i < 7; i++) { const dd = addD(d, -i); if (dd < D.primeiro) break; a += val(dd, num); if (den) b += val(dd, den); }
+  return den ? (b ? a / b : null) : a / 7;
+}
+function tabela(cols, linhas, lefts = [0]) {
+  return `<div class="tw"><table><thead><tr>${cols.map((c, i) => `<th class="${lefts.includes(i) ? 'tl' : ''}">${c}</th>`).join('')}</tr></thead><tbody>${linhas.join('')}</tbody></table></div>`;
+}
+const tr = (cells, lefts = [0]) => `<tr>${cells.map((c, i) => `<td class="${lefts.includes(i) ? 'tl' : ''}">${c}</td>`).join('')}</tr>`;
+
+/* ---------- abas ---------- */
+function abaGeral(P, c, p) {
+  const ds = daysIn(P.s, P.e);
+  let h = '';
+  // alertas
+  const al = [];
+  if (p) {
+    if (p.pix_gerado >= 10 && c.conv_pix - p.conv_pix <= -0.05) al.push(['warn', 'Conversão do Pix caiu', `${pct(p.conv_pix)} → ${pct(c.conv_pix)} em relação ao período anterior.`]);
+    if (p.valor_pago > 0 && c.valor_pago / p.valor_pago - 1 <= -0.15) al.push(['warn', 'Vendas pagas em queda', `${brl0(p.valor_pago)} → ${brl0(c.valor_pago)} (${nf1.format((c.valor_pago / p.valor_pago - 1) * 100)}%).`]);
+    if (p.valor_cartao_recusado > 0 && c.valor_cartao_recusado / p.valor_cartao_recusado - 1 >= 0.3 && c.valor_cartao_recusado > 300) al.push(['warn', 'Mais cartões recusados', `${brl0(p.valor_cartao_recusado)} → ${brl0(c.valor_cartao_recusado)} em tentativas recusadas.`]);
+    if (p.carrinhos_abandonados >= 20 && c.taxa_rec - p.taxa_rec <= -0.02) al.push(['warn', 'Recuperação de carrinhos menor', `${pct(p.taxa_rec)} → ${pct(c.taxa_rec)} dos carrinhos abandonados.`]);
+  }
+  if (c.pix_gerado >= 10 && c.conv_pix < 0.6) al.push(['crit', 'Conversão do Pix abaixo de 60%', `${pct(c.conv_pix)} dos Pix gerados foram pagos; ${brl0(c.pix_valor_perdido)} ficaram sem pagamento.`]);
+  if (!al.length) al.push(['ok', 'Sem alertas no período', 'Conversão do Pix, vendas, cartão e recuperação dentro do esperado.']);
+  h += `<section class="blk"><h2>Pontos de atenção</h2><div class="alerts">${al.map(a => `<div class="al ${a[0]}"><span class="ic">${a[0] === 'ok' ? '✓' : '!'}</span><div>${a[1]}<small>${a[2]}</small></div></div>`).join('')}</div></section>`;
+  h += `<section class="blk"><h2>Resultado</h2><div class="grid">
+    ${kpi('Vendas pagas', brl0(c.valor_pago), c.valor_pago, p && p.valor_pago, { sub: `${int(c.pedidos_pagos)} pedidos pagos` })}
+    ${kpi('Pedidos pagos', int(c.pedidos_pagos), c.pedidos_pagos, p && p.pedidos_pagos)}
+    ${kpi('Ticket médio', brl2(c.ticket), c.ticket, p && p.ticket)}
+    ${kpi('Carrinhos abandonados', int(c.carrinhos_abandonados), c.carrinhos_abandonados, p && p.carrinhos_abandonados, { bom: 'down', sub: `${brl0(c.valor_carrinhos)} em carrinhos` })}
+  </div></section>`;
+  h += `<section class="blk"><h2>Pagamento e recuperação</h2><div class="grid">
+    ${kpi('Conversão do Pix', pct(c.conv_pix), c.conv_pix, p && p.conv_pix, { tipo: 'pp', sub: `${int(c.pix_pago)} pagos de ${int(c.pix_gerado)} gerados` })}
+    ${kpi('Pix sem pagamento', brl0(c.pix_valor_perdido), c.pix_valor_perdido, p && p.pix_valor_perdido, { bom: 'down', sub: 'cancelado ou expirado' })}
+    ${kpi('Cartão recusado', brl0(c.valor_cartao_recusado), c.valor_cartao_recusado, p && p.valor_cartao_recusado, { bom: 'down', sub: `${int(c.cartao_recusado)} tentativas` })}
+    ${kpi('Recuperado', brl0(c.valor_recuperado), c.valor_recuperado, p && p.valor_recuperado, { sub: `${int(c.recuperados)} carrinhos, ${pct(c.taxa_rec)} dos abandonados` })}
+  </div></section>`;
+  h += `<section class="blk two">
+    ${chart('c1', { title: 'Vendas pagas por dia', sub: 'Barras: valor pago no dia. Linha: média dos últimos 7 dias.', labels: ds, yfmt: v => compact(v), h: 240, series: [
+      { name: 'Vendas pagas', type: 'bar', color: CORES.s1, vals: serie(P.s, P.e, d => val(d, 'valor_pago')), fmt: brl0 },
+      { name: 'Média 7 dias', type: 'line', color: CORES.s2, vals: serie(P.s, P.e, d => mm7(d, 'valor_pago')), fmt: brl0 }] })}
+    ${chart('c2', { title: 'Carrinhos abandonados e recuperados', sub: 'Quantidade por dia em que o carrinho foi criado.', labels: ds, yfmt: v => int(v), h: 240, series: [
+      { name: 'Abandonados', type: 'bar', color: CORES.s1, vals: serie(P.s, P.e, d => val(d, 'carrinhos_abandonados')) },
+      { name: 'Recuperados', type: 'bar', color: CORES.s3, vals: serie(P.s, P.e, d => val(d, 'recuperados')) }] })}
+  </section>`;
+  h += blocoSemanasMeses();
+  return h;
+}
+function blocoSemanasMeses() {
+  const grupos = (chave) => {
+    const m = {};
+    const ontem = addD(hojeFortaleza(), -1);
+    D.dias.forEach(d => { if (d > ontem) return; const k = chave(d); (m[k] = m[k] || []).push(d); });
+    return Object.keys(m).sort().reverse().map(k => {
+      const ds = m[k], t = agg(ds[0], ds[ds.length - 1]);
+      return { k, n: ds.length, t, ini: ds[0] };
+    });
+  };
+  const seg = d => { const dt = new Date(Date.parse(d + 'T00:00:00Z')), wd = (dt.getUTCDay() + 6) % 7; return addD(d, -wd); };
+  const sem = grupos(seg).slice(0, 12);
+  const mes = grupos(d => d.slice(0, 7));
+  const lin = (g, lab) => tr([lab, brl0(g.t.valor_pago), int(g.t.pedidos_pagos), brl2(g.t.ticket), pct(g.t.conv_pix), brl0(g.t.pix_valor_perdido), int(g.t.carrinhos_abandonados), int(g.t.recuperados), brl0(g.t.valor_recuperado)]);
+  const cols = ['Período', 'Vendas pagas', 'Pedidos', 'Ticket', 'Conv. Pix', 'Pix sem pgto', 'Carrinhos', 'Recuper.', 'Valor recup.'];
+  const nomeMes = k => { const [a, m] = k.split('-'); return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+m - 1] + '/' + a.slice(2); };
+  return `<section class="blk"><h2>Semana a semana</h2>${tabela(cols, sem.map(g => lin(g, `${ddmm(g.k)} a ${ddmm(addD(g.k, 6))}${g.n < 7 ? ' (' + g.n + ' d)' : ''}`)))}</section>
+  <section class="blk"><h2>Mês a mês</h2>${tabela(cols, mes.map(g => lin(g, nomeMes(g.k) + (g.n < 28 ? ' (' + g.n + ' d)' : ''))))}
+  <p class="note">Meses incompletos mostram o número de dias com dados. Semanas começam na segunda-feira.</p></section>`;
+}
+
+function abaPix(P, c, p) {
+  const ds = daysIn(P.s, P.e);
+  const lin = ds.slice().reverse().map(d => { const r = row(d) || {}; const cv = r.pix_gerado ? r.pix_pago / r.pix_gerado : 0;
+    return tr([ddmmyy(d), int(r.pix_gerado), int(r.pix_pago), pct(cv), brl0(r.pix_valor_perdido)]); });
+  return `<section class="blk"><h2>Pix no período</h2><div class="grid">
+    ${kpi('Pix gerados', int(c.pix_gerado), c.pix_gerado, p && p.pix_gerado)}
+    ${kpi('Pix pagos', int(c.pix_pago), c.pix_pago, p && p.pix_pago)}
+    ${kpi('Conversão do Pix', pct(c.conv_pix), c.conv_pix, p && p.conv_pix, { tipo: 'pp', sub: 'pagos ÷ gerados' })}
+    ${kpi('Pix sem pagamento', brl0(c.pix_valor_perdido), c.pix_valor_perdido, p && p.pix_valor_perdido, { bom: 'down', sub: `${int(c.pix_gerado - c.pix_pago)} Pix não pagos` })}
+  </div></section>
+  <section class="blk two">
+    ${chart('p1', { title: 'Pix gerados e pagos por dia', labels: ds, yfmt: v => int(v), h: 240, series: [
+      { name: 'Gerados', type: 'bar', color: CORES.s1, vals: serie(P.s, P.e, d => val(d, 'pix_gerado')) },
+      { name: 'Pagos', type: 'bar', color: CORES.s2, vals: serie(P.s, P.e, d => val(d, 'pix_pago')) }] })}
+    ${chart('p2', { title: 'Conversão do Pix (média de 7 dias)', sub: 'Pagos ÷ gerados, calculado sobre os 7 dias anteriores a cada data.', labels: ds, pct: true, yfmt: v => Math.round(v * 100) + '%', h: 240, series: [
+      { name: 'Conversão', type: 'line', color: CORES.s1, vals: serie(P.s, P.e, d => mm7(d, 'pix_pago', 'pix_gerado')), fmt: pct }] })}
+  </section>
+  <details open><summary>Tabela diária</summary>${tabela(['Dia', 'Gerados', 'Pagos', 'Conversão', 'Sem pagamento'], lin)}</details>`;
+}
+
+function rfRange(s, e) { return D.rf.filter(r => r.criado >= s && r.criado <= e); }
+function rfSum(rows) {
+  const o = { pixN: 0, pixV: 0, cartN: 0, cartV: 0, carN: 0, carV: 0 };
+  rows.forEach(r => {
+    if (r.origem === 'pedido' && r.metodo === 'pix') { o.pixN++; o.pixV += r.valor; }
+    else if (r.origem === 'pedido') { o.cartN++; o.cartV += r.valor; }
+    else { o.carN++; o.carV += r.valor; }
+  });
+  return o;
+}
+function abaRecusados(P, c, p) {
+  const rows = rfRange(P.s, P.e), a = rfSum(rows), b = p ? rfSum(rfRange(P.ps, P.pe)) : null, ds = daysIn(P.s, P.e);
+  const porDia = (f) => serie(P.s, P.e, d => rows.filter(r => r.criado === d && f(r)).reduce((t, r) => t + r.valor, 0));
+  const lista = rows.slice().sort((x, y) => y.criado.localeCompare(x.criado) || y.valor - x.valor).slice(0, 300).map(r => {
+    const met = r.metodo === 'pix' ? '<span class="pill pix">Pix</span>' : r.metodo === 'cartao' ? '<span class="pill card">Cartão</span>' : '<span class="pill">' + esc(r.metodo) + '</span>';
+    const mot = /refus/i.test(r.motivo) ? 'Recusado pelo banco' : 'Cancelado ou expirado';
+    return tr([ddmmyy(r.criado), r.origem === 'pedido' ? 'Pedido' : 'Carrinho', met, brl2(r.valor), mot, esc(String(r.id))], [0, 1, 2, 4]);
+  });
+  return `<section class="blk"><h2>Pagamentos não concluídos</h2><div class="grid">
+    ${kpi('Pix sem pagamento', brl0(a.pixV), a.pixV, b && b.pixV, { bom: 'down', sub: `${int(a.pixN)} pedidos com Pix cancelado ou expirado` })}
+    ${kpi('Cartão recusado', brl0(a.cartV), a.cartV, b && b.cartV, { bom: 'down', sub: `${int(a.cartN)} pedidos com cartão recusado ou cancelado` })}
+    ${kpi('Total em pedidos não pagos', brl0(a.pixV + a.cartV), a.pixV + a.cartV, b && b.pixV + b.cartV, { bom: 'down', sub: `${int(a.pixN + a.cartN)} pedidos` })}
+    ${kpi('Carrinhos com tentativa recusada', int(a.carN), a.carN, b && b.carN, { bom: 'down', sub: `${brl0(a.carV)} em carrinhos` })}
+  </div></section>
+  <section class="blk">${chart('r1', { title: 'Valor de pedidos não pagos por dia', sub: 'Soma dos pedidos com Pix cancelado ou expirado e cartão recusado.', labels: ds, yfmt: v => compact(v), h: 240, series: [
+      { name: 'Pix', type: 'bar', color: CORES.s1, vals: porDia(r => r.origem === 'pedido' && r.metodo === 'pix'), fmt: brl0 },
+      { name: 'Cartão', type: 'bar', color: CORES.s2, vals: porDia(r => r.origem === 'pedido' && r.metodo !== 'pix'), fmt: brl0 }] })}</section>
+  <section class="blk"><h2>Lista de ocorrências${rows.length > 300 ? ' (300 mais recentes)' : ''}</h2>
+    ${tabela(['Data', 'Tipo', 'Método', 'Valor', 'Situação', 'Nº'], lista, [0, 1, 2, 4])}
+    <p class="note">Pedido com Pix cancelado normalmente é Pix gerado e não pago no prazo. Pedido de cartão recusado é tentativa que o banco ou a operadora não aprovou. O mesmo cliente pode aparecer mais de uma vez se tentou de novo.</p></section>`;
+}
+
+function abaRecuperacao(P, c, p) {
+  const ds = daysIn(P.s, P.e);
+  const rows = D.rec.filter(r => r.recuperado && r.criado >= P.s && r.criado <= P.e).sort((a, b) => b.criado.localeCompare(a.criado));
+  const outrosN = Math.max(0, c.recuperados - c.recuperados_whatsapp), outrosV = Math.max(0, c.valor_recuperado - c.valor_recuperado_whatsapp);
+  const lista = rows.slice(0, 300).map(r => tr([ddmmyy(r.criado), brl2(r.valor_carrinho), brl2(r.valor_pedido), r.dias === '' ? '-' : int(r.dias) + (+r.dias === 1 ? ' dia' : ' dias'), r.canal === 'WhatsApp Yampi' ? '<span class="pill wa">WhatsApp Yampi</span>' : '<span class="pill">Sem WhatsApp</span>', int(r.emails)], [0, 4]));
+  return `<section class="blk"><h2>Recuperação de carrinhos</h2><div class="grid">
+    ${kpi('Carrinhos abandonados', int(c.carrinhos_abandonados), c.carrinhos_abandonados, p && p.carrinhos_abandonados, { bom: 'down', sub: brl0(c.valor_carrinhos) })}
+    ${kpi('Carrinhos recuperados', int(c.recuperados), c.recuperados, p && p.recuperados, { sub: `${pct(c.taxa_rec)} dos abandonados` })}
+    ${kpi('Valor recuperado', brl0(c.valor_recuperado), c.valor_recuperado, p && p.valor_recuperado, { sub: `${pct(c.valor_carrinhos ? c.valor_recuperado / c.valor_carrinhos : 0)} do valor abandonado` })}
+    ${kpi('Taxa de recuperação', pct(c.taxa_rec), c.taxa_rec, p && p.taxa_rec, { tipo: 'pp' })}
+  </div></section>
+  <section class="blk"><h2>Por canal</h2><div class="grid">
+    ${kpi('Recuperado pelo WhatsApp Yampi', brl0(c.valor_recuperado_whatsapp), c.valor_recuperado_whatsapp, p && p.valor_recuperado_whatsapp, { sub: `${int(c.recuperados_whatsapp)} carrinhos` })}
+    ${kpi('Recuperado sem WhatsApp', brl0(outrosV), outrosV, p && (p.valor_recuperado - p.valor_recuperado_whatsapp), { sub: `${int(outrosN)} carrinhos (e-mail ou retorno do cliente)` })}
+    ${kpi('Vendas com origem no WhatsApp Yampi', brl0(c.valor_vendas_whatsapp_yampi), c.valor_vendas_whatsapp_yampi, p && p.valor_vendas_whatsapp_yampi, { sub: `${int(c.vendas_whatsapp_yampi)} pedidos pagos, qualquer carrinho` })}
+  </div></section>
+  <section class="blk">${chart('q1', { title: 'Valor recuperado por dia', sub: 'Dia em que o carrinho foi abandonado.', labels: ds, yfmt: v => compact(v), h: 240, series: [
+      { name: 'WhatsApp Yampi', type: 'bar', color: CORES.s3, vals: serie(P.s, P.e, d => val(d, 'valor_recuperado_whatsapp')), fmt: brl0 },
+      { name: 'Sem WhatsApp', type: 'bar', color: CORES.s1, vals: serie(P.s, P.e, d => Math.max(0, val(d, 'valor_recuperado') - val(d, 'valor_recuperado_whatsapp'))), fmt: brl0 }] })}</section>
+  <section class="blk"><h2>Carrinhos recuperados${rows.length > 300 ? ' (300 mais recentes)' : ''}</h2>
+    ${tabela(['Carrinho em', 'Valor do carrinho', 'Valor pago', 'Tempo até comprar', 'Canal', 'E-mails enviados'], lista, [0, 4])}
+    <p class="note">Um carrinho conta como recuperado quando o mesmo cliente (pelo pedido ou pelo e-mail) paga em até 7 dias, em dia posterior ao abandono ou depois de uma mensagem do WhatsApp Yampi. Compras no mesmo dia, sem mensagem, são checkout normal e não entram.</p></section>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  if (!D) return;
+  const P = periodo(), c = agg(P.s, P.e), p = P.ps ? agg(P.ps, P.pe) : null;
+  $('#range').innerHTML = `<b>${ddmmyy(P.s)} a ${ddmmyy(P.e)}</b> (${P.n} ${P.n === 1 ? 'dia' : 'dias'})` + (P.ps ? ` · comparado com ${ddmmyy(P.ps)} a ${ddmmyy(P.pe)}` : ' · sem comparação') + ' · dias completos, até ontem';
+  CHARTS = [];
+  const f = { geral: abaGeral, pix: abaPix, recusados: abaRecusados, recuperacao: abaRecuperacao }[S.tab];
+  $('#main').innerHTML = f(P, c, p);
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
+  document.querySelectorAll('.pre').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === S.p));
+  drawAll();
+}
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 120); });
+
+/* ---------- carga ---------- */
+function status(txt, cls) { $('#updtxt').textContent = txt; $('#dot').className = 'dot ' + (cls || ''); }
+function quando() {
+  if (!D) return;
+  const t = new Date(D.atualizado), min = Math.round((Date.now() - t) / 6e4);
+  const hora = t.toLocaleString('pt-BR', { timeZone: 'America/Fortaleza', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  status(`Dados de ${hora}` + (min < 90 ? '' : ' (atrasado)'), min < 150 ? '' : 'old');
+}
+async function carregar(manual) {
+  const btn = $('#refresh'); btn.disabled = true; if (manual) status('Atualizando…');
+  try {
+    const r = await fetch(API, { redirect: 'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const raw = await r.json();
+    D = normalizar(raw); try { localStorage.setItem('jeri_cache', JSON.stringify(raw)); } catch (e) {}
+    quando(); render();
+  } catch (e) {
+    if (!D) {
+      status('Sem conexão com os dados', 'err');
+      $('#main').innerHTML = `<div class="state"><h3>Não foi possível carregar os dados</h3><p>Verifique a internet e tente de novo.</p><button class="btn" onclick="carregar(true)">Tentar novamente</button></div>`;
+    } else { status('Falha ao atualizar, mostrando dados anteriores', 'old'); }
+  } finally { btn.disabled = false; }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('.tab'), p = e.target.closest('.pre');
+  if (t) { S.tab = t.dataset.tab; try { history.replaceState(null, '', '#' + S.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); }
+  if (p) { S.p = p.dataset.p; render(); }
+});
+$('#refresh').addEventListener('click', () => carregar(true));
+(function init() {
+  const h = location.hash.slice(1); if (['geral', 'pix', 'recusados', 'recuperacao'].includes(h)) S.tab = h;
+  try { const c = localStorage.getItem('jeri_cache'); if (c) { D = normalizar(JSON.parse(c)); quando(); render(); } } catch (e) {}
+  carregar(false);
+  setInterval(() => carregar(false), 10 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

@@ -97,6 +97,30 @@ summary:hover{color:var(--text)}
 @keyframes sk{to{background-position:-200% 0}}
 footer{margin-top:36px;color:var(--text-3);font-size:12.5px;text-align:center}
 .hide{display:none}
+
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.seg button{background:transparent;border:0;color:var(--text-3);padding:6px 12px;border-radius:7px;cursor:pointer;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--surface-2);color:var(--text)}
+.ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 10px;color:var(--text-3);font-size:13px}
+.ctl select,.ctl input{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px}
+.ctl input{width:64px}
+th[data-sort]{cursor:pointer;user-select:none}
+th[data-sort]:hover{color:var(--text)}
+th .ar{opacity:.9;margin-left:3px}
+td.nm{max-width:360px;overflow:hidden;text-overflow:ellipsis}
+td.nm small{display:block;color:var(--text-3);font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
+.rx{display:inline-block;min-width:58px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:650;font-variant-numeric:tabular-nums}
+.rx.g{background:rgba(12,163,12,.16);color:#5fd66e}.rx.y{background:rgba(250,178,25,.16);color:#fbc54e}.rx.r{background:rgba(208,59,59,.18);color:#ff8a7e}.rx.n{background:var(--surface-2);color:var(--text-3)}
+.g6{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.champs{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.champ{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.champ h4{margin:0 0 4px;font-size:14.5px;font-weight:600;line-height:1.3}
+.champ .m{display:flex;gap:16px;flex-wrap:wrap;color:var(--text-3);font-size:12.5px;margin:6px 0 8px}
+.champ .m b{color:var(--text);font-weight:600}
+.champ ul{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--text-2)}
+.champ li{padding:5px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+.champ li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.champ .lb{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);margin-top:8px}
 @media (prefers-reduced-motion:reduce){.skel{animation:none}}
 </style>
 </head>
@@ -109,6 +133,7 @@ footer{margin-top:36px;color:var(--text-3);font-size:12.5px;text-align:center}
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs">
       <button class="tab" role="tab" data-tab="geral">Visão geral</button>
+      <button class="tab" role="tab" data-tab="campanhas">Campanhas</button>
       <button class="tab" role="tab" data-tab="pix">Pix</button>
       <button class="tab" role="tab" data-tab="recusados">Recusados</button>
       <button class="tab" role="tab" data-tab="recuperacao">Recuperação</button>
@@ -222,7 +247,7 @@ function delta(cur, prev, { bom = 'up', tipo = 'pct', fmt } = {}) {
     if (!prev) return cur ? '<span class="chg flat">novo</span><span>vs período anterior</span>' : '';
     const dd = (cur - prev) / prev; dir = Math.abs(dd) < 0.0005 ? 0 : dd > 0 ? 1 : -1; txt = (dd > 0 ? '+' : '') + nf1.format(dd * 100) + '%';
   }
-  const cls = dir === 0 ? 'flat' : ((dir > 0) === (bom === 'up') ? 'good' : 'bad');
+  const cls = (dir === 0 || bom === 'neutro') ? 'flat' : ((dir > 0) === (bom === 'up') ? 'good' : 'bad');
   const seta = dir === 0 ? '→' : dir > 0 ? '▲' : '▼';
   return `<span class="chg ${cls}">${seta} ${txt}</span><span>${fmt ? 'antes ' + fmt(prev) : 'vs período anterior'}</span>`;
 }
@@ -315,6 +340,7 @@ function abaGeral(P, c, p) {
     if (p.carrinhos_abandonados >= 20 && c.taxa_rec - p.taxa_rec <= -0.02) al.push(['warn', 'Recuperação de carrinhos menor', `${pct(p.taxa_rec)} → ${pct(c.taxa_rec)} dos carrinhos abandonados.`]);
   }
   if (c.pix_gerado >= 10 && c.conv_pix < 0.6) al.push(['crit', 'Conversão do Pix abaixo de 60%', `${pct(c.conv_pix)} dos Pix gerados foram pagos; ${brl0(c.pix_valor_perdido)} ficaram sem pagamento.`]);
+  if (A) { const ee = P.e > A.ate ? A.ate : P.e, m = adsTot(P.s, ee); if (m.g >= 1000 && m.roas < METAROAS * 0.7) al.push(['warn', 'ROAS abaixo da meta', `ROAS atribuído de ${rx(m.roas)} com ${brl0(m.g)} investidos (meta ${rx(METAROAS)}).`]); }
   if (!al.length) al.push(['ok', 'Sem alertas no período', 'Conversão do Pix, vendas, cartão e recuperação dentro do esperado.']);
   h += `<section class="blk"><h2>Pontos de atenção</h2><div class="alerts">${al.map(a => `<div class="al ${a[0]}"><span class="ic">${a[0] === 'ok' ? '✓' : '!'}</span><div>${a[1]}<small>${a[2]}</small></div></div>`).join('')}</div></section>`;
   h += `<section class="blk"><h2>Resultado</h2><div class="grid">
@@ -323,6 +349,7 @@ function abaGeral(P, c, p) {
     ${kpi('Ticket médio', brl2(c.ticket), c.ticket, p && p.ticket)}
     ${kpi('Carrinhos abandonados', int(c.carrinhos_abandonados), c.carrinhos_abandonados, p && p.carrinhos_abandonados, { bom: 'down', sub: `${brl0(c.valor_carrinhos)} em carrinhos` })}
   </div></section>`;
+  h += midiaKpis(P, c, p);
   h += `<section class="blk"><h2>Pagamento e recuperação</h2><div class="grid">
     ${kpi('Conversão do Pix', pct(c.conv_pix), c.conv_pix, p && p.conv_pix, { tipo: 'pp', sub: `${int(c.pix_pago)} pagos de ${int(c.pix_gerado)} gerados` })}
     ${kpi('Pix sem pagamento', brl0(c.pix_valor_perdido), c.pix_valor_perdido, p && p.pix_valor_perdido, { bom: 'down', sub: 'cancelado ou expirado' })}
@@ -437,13 +464,154 @@ function abaRecuperacao(P, c, p) {
     <p class="note">Um carrinho conta como recuperado quando o mesmo cliente (pelo pedido ou pelo e-mail) paga em até 7 dias, em dia posterior ao abandono ou depois de uma mensagem do WhatsApp Yampi. Compras no mesmo dia, sem mensagem, são checkout normal e não entram.</p></section>`;
 }
 
+
+/* ---------- anúncios (Meta) ---------- */
+let A = null;
+const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rx = n => nf2.format(n || 0) + 'x';
+let METAROAS = 4; try { const v = parseFloat(localStorage.getItem('jeri_meta_roas')); if (v > 0) METAROAS = v; } catch (e) {}
+S.lvl = 'c'; S.min = 100; S.sort = { k: 'roas', d: -1 };
+
+function prepAds(raw) {
+  const L = raw.linhas.map(l => ({ d: l[0], c: l[1], s: l[2], a: l[3], sp: l[4], n: l[5], rv: l[6] }));
+  const byDay = {};
+  L.forEach(r => { const x = byDay[r.d] = byDay[r.d] || [0, 0, 0]; x[0] += r.sp; x[1] += r.n; x[2] += r.rv; });
+  return { nomes: raw.nomes, L, byDay, ate: raw.ate, gerado: raw.gerado };
+}
+const nm = k => (A.nomes[String(k)] || '#' + k);
+function adsTot(s, e) {
+  let g = 0, n = 0, r = 0;
+  daysIn(s, e).forEach(d => { const x = A.byDay[d]; if (x) { g += x[0]; n += x[1]; r += x[2]; } });
+  return { g, n, r, roas: g ? r / g : 0, cpa: n ? g / n : 0 };
+}
+function roas7(d) {
+  let g = 0, r = 0;
+  for (let i = 0; i < 7; i++) { const x = A.byDay[addD(d, -i)]; if (x) { g += x[0]; r += x[2]; } }
+  return g ? r / g : null;
+}
+const ehVendas = n => /^vendas/i.test(n) && !/atacado|cat[aá]logo/i.test(n);
+
+function adsNivel(s, e, nivel) {
+  const rows = A.L.filter(r => r.d >= s && r.d <= e);
+  const cm = {};
+  rows.forEach(r => { const x = cm[r.c] = cm[r.c] || [0, 0]; x[0] += r.rv; if (r.a < 0) x[1] += r.rv; });
+  const dyn = id => cm[id] && cm[id][0] > 0 && cm[id][1] / cm[id][0] >= 0.8;     // catálogo/dinâmico: receita sem ID de anúncio
+  const m = new Map(); let ocultos = 0;
+  rows.forEach(r => {
+    let key, nome, sub = '';
+    if (nivel === 'c') { key = r.c; nome = nm(r.c); }
+    else if (nivel === 's') { if (r.s < 0) return; key = r.s; nome = nm(r.s); sub = nm(r.c); }
+    else { if (r.a < 0) return; if (dyn(r.c)) { ocultos += r.sp; return; } nome = nm(r.a); key = nome; sub = ''; }
+    let x = m.get(key);
+    if (!x) m.set(key, x = { key, nome, sub, g: 0, n: 0, rv: 0, conj: new Set(), camp: new Set() });
+    x.g += r.sp; x.n += r.n; x.rv += r.rv;
+    if (r.s >= 0) x.conj.add(r.s); x.camp.add(r.c);
+  });
+  m.forEach(x => { x.roas = x.g ? x.rv / x.g : 0; x.cpa = x.n ? x.g / x.n : 0; });
+  return { m, ocultos };
+}
+const rxCls = (v, g) => g < 1 ? 'n' : v >= METAROAS ? 'g' : v >= METAROAS * 0.7 ? 'y' : 'r';
+const rxTag = (v, g) => `<span class="rx ${rxCls(v, g)}">${g < 1 ? '-' : rx(v)}</span>`;
+
+function midiaKpis(P, c, p) {
+  if (!A) return '';
+  const e = P.e > A.ate ? A.ate : P.e, a = adsTot(P.s, e), b = P.ps ? adsTot(P.ps, P.pe > A.ate ? A.ate : P.pe) : null;
+  const geral = a.g ? c.valor_pago / a.g : 0, geralP = b && b.g && p ? p.valor_pago / b.g : null;
+  return `<section class="blk"><h2>Mídia paga (Meta)</h2><div class="grid">
+    ${kpi('Investimento', brl0(a.g), a.g, b && b.g, { bom: 'neutro', sub: 'gasto no Meta Ads' })}
+    ${kpi('ROAS atribuído', rx(a.roas), a.roas, b && b.roas, { sub: `meta ${rx(METAROAS)} · receita ${brl0(a.r)}` })}
+    ${kpi('Custo por compra', brl2(a.cpa), a.cpa, b && b.cpa, { bom: 'down', sub: `${int(a.n)} compras atribuídas` })}
+    ${kpi('ROAS geral', rx(geral), geral, geralP, { sub: 'vendas pagas totais ÷ investimento' })}
+  </div></section>`;
+}
+
+function tabelaRank(P, nivel) {
+  const e = P.e > A.ate ? A.ate : P.e;
+  const cur = adsNivel(P.s, e, nivel), prev = P.ps ? adsNivel(P.ps, P.pe > A.ate ? A.ate : P.pe, nivel).m : null;
+  const tot = [...cur.m.values()].reduce((t, x) => t + x.g, 0) || 1;
+  let list = [...cur.m.values()];
+  const baixo = list.filter(x => x.g < S.min).length;
+  list = list.filter(x => x.g >= S.min);
+  const k = S.sort.k, d = S.sort.d;
+  list.sort((x, y) => k === 'nome' ? d * x.nome.localeCompare(y.nome) : d * ((x[k] || 0) - (y[k] || 0)));
+  const th = (key, lab, left) => `<th data-sort="${key}" class="${left ? 'tl' : ''}">${lab}${S.sort.k === key ? `<span class="ar">${S.sort.d < 0 ? '▼' : '▲'}</span>` : ''}</th>`;
+  const lin = list.slice(0, 200).map(x => {
+    const pv = prev && prev.get(x.key);
+    const nome = `<td class="tl nm" title="${esc(x.nome)}">${esc(x.nome)}${x.sub ? `<small>${esc(x.sub)}</small>` : ''}${nivel === 'a' ? `<small>roda em ${x.conj.size} ${x.conj.size === 1 ? 'conjunto' : 'conjuntos'}</small>` : ''}</td>`;
+    return `<tr>${nome}<td>${brl0(x.g)}</td><td>${pct(x.g / tot)}</td><td>${int(x.n)}</td><td>${brl0(x.rv)}</td><td>${rxTag(x.roas, x.g)}</td><td>${x.n ? brl2(x.cpa) : '-'}</td><td>${pv && pv.g >= 1 ? rx(pv.roas) : '-'}</td></tr>`;
+  });
+  const cab = `<tr>${th('nome', nivel === 'c' ? 'Campanha' : nivel === 's' ? 'Conjunto' : 'Criativo', true)}${th('g', 'Gasto')}${th('g', '% do gasto').replace('data-sort="g"', 'data-sort="g"')}${th('n', 'Compras')}${th('rv', 'Receita')}${th('roas', 'ROAS')}${th('cpa', 'Custo/compra')}<th>ROAS anterior</th></tr>`;
+  const nota = [];
+  if (baixo) nota.push(`${baixo} ${baixo === 1 ? 'item' : 'itens'} com gasto abaixo de ${brl0(S.min)} ${baixo === 1 ? 'oculto' : 'ocultos'}.`);
+  if (nivel === 'a' && cur.ocultos > 0) nota.push(`Campanhas de catálogo (${brl0(cur.ocultos)} investidos) não entram aqui: a venda delas não traz o ID do anúncio, então só dá para medir por campanha e conjunto.`);
+  if (nivel === 'a') nota.push('Criativos com o mesmo nome em vários conjuntos aparecem somados. Parte das vendas (6% a 26% por campanha) não traz o ID do anúncio, então o ROAS por criativo tende a ficar um pouco abaixo do real.');
+  return `<div class="tw"><table><thead>${cab}</thead><tbody>${lin.join('')}</tbody></table></div>${nota.length ? `<p class="note">${nota.join(' ')}</p>` : ''}`;
+}
+
+function replicar(P) {
+  const e = P.e > A.ate ? A.ate : P.e, cr = adsNivel(P.s, e, 'a').m, cj = adsNivel(P.s, e, 's').m;
+  const lista = [...cr.values()].filter(x => x.g >= 150 && x.n >= 3).sort((a, b) => b.roas - a.roas);
+  const campeoes = lista.filter(x => x.roas > 0).slice(0, 4);
+  // conjuntos de vendas ativos nos últimos 7 dias dos dados
+  const ini7 = addD(A.ate, -6), gasto7 = {};
+  A.L.forEach(r => { if (r.d >= ini7 && r.s >= 0) gasto7[r.s] = (gasto7[r.s] || 0) + r.sp; });
+  const ativos = Object.keys(gasto7).filter(k => gasto7[k] >= 30).map(Number).filter(k => cj.get(k) && ehVendas(cj.get(k).sub));
+  const rodaEm = {};   // nome do criativo -> conjuntos onde teve gasto
+  A.L.forEach(r => { if (r.d >= P.s && r.d <= e && r.a >= 0) (rodaEm[nm(r.a)] = rodaEm[nm(r.a)] || new Set()).add(r.s); });
+  const card = x => {
+    const ja = rodaEm[x.nome] || new Set();
+    const sug = ativos.filter(id => !ja.has(id)).map(id => cj.get(id)).sort((a, b) => b.roas - a.roas).slice(0, 3);
+    return `<div class="champ"><h4>${esc(x.nome)}</h4>
+      <div class="m"><span>ROAS <b>${rx(x.roas)}</b>${x.n < 5 || x.g < 300 ? ' <i style="color:#fbc54e;font-style:normal">(amostra pequena)</i>' : ''}</span><span>Gasto <b>${brl0(x.g)}</b></span><span>Compras <b>${int(x.n)}</b></span><span>Custo/compra <b>${brl2(x.cpa)}</b></span></div>
+      <div class="lb">Roda em ${ja.size} ${ja.size === 1 ? 'conjunto' : 'conjuntos'}</div>
+      <div class="lb">Ainda não roda em (conjuntos de vendas ativos)</div>
+      ${sug.length ? `<ul>${sug.map(z => `<li><span title="${esc(z.nome)}">${esc(z.nome)}</span><span>${rx(z.roas)}</span></li>`).join('')}</ul>` : '<p class="note" style="margin:6px 0 0">Já roda em todos os conjuntos de vendas ativos.</p>'}</div>`;
+  };
+  const rev = [...cr.values()].filter(x => x.g >= Math.max(300, 0) && x.roas < METAROAS * 0.5).sort((a, b) => b.g - a.g).slice(0, 5);
+  return `<section class="blk"><h2>Criativos para replicar</h2>
+    ${campeoes.length ? `<div class="champs">${campeoes.map(card).join('')}</div>` : '<div class="card"><p class="note" style="margin:0">Nenhum criativo com gasto acima de R$ 150 e 3 compras no período.</p></div>'}
+    <p class="note">Campeões: maior ROAS entre criativos com pelo menos R$ 150 de gasto e 3 compras. A lista de conjuntos mostra onde o criativo ainda não rodou no período, ordenada pelo ROAS do conjunto. É uma sugestão de teste, não garantia de resultado.</p></section>
+    ${rev.length ? `<section class="blk"><h2>Revisar: gastando com retorno baixo</h2>${tabela(['Criativo', 'Gasto', 'Receita', 'ROAS', 'Compras'], rev.map(x => tr([esc(x.nome), brl0(x.g), brl0(x.rv), rxTag(x.roas, x.g), int(x.n)])))}<p class="note">Criativos com gasto acima de R$ 300 e ROAS abaixo de metade da meta (${rx(METAROAS * 0.5)}).</p></section>` : ''}`;
+}
+
+function abaCampanhas(P, c, p) {
+  if (!A) return `<div class="state"><h3>Dados de campanha indisponíveis</h3><p>Não foi possível carregar o arquivo de campanhas.</p></div>`;
+  const e = P.e > A.ate ? A.ate : P.e, pe = P.ps ? (P.pe > A.ate ? A.ate : P.pe) : null;
+  const a = adsTot(P.s, e), b = P.ps ? adsTot(P.ps, pe) : null, ds = daysIn(P.s, e);
+  const geral = a.g ? c.valor_pago / a.g : 0, geralP = b && b.g && p ? p.valor_pago / b.g : null;
+  return `<section class="blk"><div class="ctl"><span>Meta de ROAS <input id="meta" type="number" step="0.1" min="0.5" value="${METAROAS}"></span><span>Verde: na meta ou acima · Amarelo: de 70% a 100% da meta · Vermelho: abaixo de 70%. Dados de campanha até ${ddmmyy(A.ate)}.</span></div>
+  <div class="grid g6">
+    ${kpi('Investimento', brl0(a.g), a.g, b && b.g, { bom: 'neutro', sub: 'Meta Ads' })}
+    ${kpi('Receita atribuída', brl0(a.r), a.r, b && b.r, { sub: 'vendas pagas com origem nos anúncios' })}
+    ${kpi('ROAS atribuído', rx(a.roas), a.roas, b && b.roas, { sub: `meta ${rx(METAROAS)}` })}
+    ${kpi('Compras atribuídas', int(a.n), a.n, b && b.n)}
+    ${kpi('Custo por compra', brl2(a.cpa), a.cpa, b && b.cpa, { bom: 'down' })}
+    ${kpi('ROAS geral', rx(geral), geral, geralP, { sub: 'todas as vendas pagas ÷ investimento' })}
+  </div></section>
+  <section class="blk two">
+    ${chart('m1', { title: 'Investimento e receita por dia', sub: 'Receita atribuída pelos anúncios.', labels: ds, yfmt: v => compact(v), h: 240, series: [
+      { name: 'Investimento', type: 'bar', color: CORES.s1, vals: ds.map(d => (A.byDay[d] || [0])[0]), fmt: brl0 },
+      { name: 'Receita atribuída', type: 'bar', color: CORES.s3, vals: ds.map(d => (A.byDay[d] || [0, 0, 0])[2]), fmt: brl0 }] })}
+    ${chart('m2', { title: 'ROAS atribuído (média de 7 dias)', sub: 'Receita ÷ investimento nos 7 dias até cada data.', labels: ds, yfmt: v => nf1.format(v) + 'x', h: 240, series: [
+      { name: 'ROAS', type: 'line', color: CORES.s1, vals: ds.map(roas7), fmt: rx },
+      { name: 'Meta', type: 'line', color: '#8d8c84', vals: ds.map(() => METAROAS), fmt: rx }] })}
+  </section>
+  ${replicar(P)}
+  <section class="blk"><h2>Ranking</h2>
+    <div class="ctl"><div class="seg" id="lvl"><button data-lvl="c" aria-pressed="${S.lvl === 'c'}">Campanhas</button><button data-lvl="s" aria-pressed="${S.lvl === 's'}">Conjuntos</button><button data-lvl="a" aria-pressed="${S.lvl === 'a'}">Criativos</button></div>
+    <span>Gasto mínimo <select id="min">${[0, 50, 100, 300, 500].map(v => `<option value="${v}" ${S.min === v ? 'selected' : ''}>${v ? 'R$ ' + v : 'todos'}</option>`).join('')}</select></span>
+    <span>Clique no título da coluna para ordenar.</span></div>
+    ${tabelaRank(P, S.lvl)}
+    <p class="note">Receita e compras vêm dos pedidos pagos com UTM do anúncio. Pedidos sem UTM (direto, orgânico, Google) não entram no ROAS atribuído, por isso o ROAS geral é maior. Google Ads não está incluído.</p></section>`;
+}
+
 /* ---------- render ---------- */
 function render() {
   if (!D) return;
   const P = periodo(), c = agg(P.s, P.e), p = P.ps ? agg(P.ps, P.pe) : null;
   $('#range').innerHTML = `<b>${ddmmyy(P.s)} a ${ddmmyy(P.e)}</b> (${P.n} ${P.n === 1 ? 'dia' : 'dias'})` + (P.ps ? ` · comparado com ${ddmmyy(P.ps)} a ${ddmmyy(P.pe)}` : ' · sem comparação') + ' · dias completos, até ontem';
   CHARTS = [];
-  const f = { geral: abaGeral, pix: abaPix, recusados: abaRecusados, recuperacao: abaRecuperacao }[S.tab];
+  const f = { geral: abaGeral, campanhas: abaCampanhas, pix: abaPix, recusados: abaRecusados, recuperacao: abaRecuperacao }[S.tab];
   $('#main').innerHTML = f(P, c, p);
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
   document.querySelectorAll('.pre').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === S.p));
@@ -459,6 +627,13 @@ function quando() {
   const hora = t.toLocaleString('pt-BR', { timeZone: 'America/Fortaleza', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   status(`Dados de ${hora}` + (min < 90 ? '' : ' (atrasado)'), min < 150 ? '' : 'old');
 }
+async function carregarAds() {
+  try {
+    const r = await fetch('campanhas.json?v=' + Math.floor(Date.now() / 36e5));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    A = prepAds(await r.json()); render();
+  } catch (e) { /* aba Campanhas mostra aviso */ }
+}
 async function carregar(manual) {
   const btn = $('#refresh'); btn.disabled = true; if (manual) status('Atualizando…');
   try {
@@ -466,7 +641,7 @@ async function carregar(manual) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const raw = await r.json();
     D = normalizar(raw); try { localStorage.setItem('jeri_cache', JSON.stringify(raw)); } catch (e) {}
-    quando(); render();
+    quando(); render(); carregarAds();
   } catch (e) {
     if (!D) {
       status('Sem conexão com os dados', 'err');
@@ -478,10 +653,17 @@ document.addEventListener('click', e => {
   const t = e.target.closest('.tab'), p = e.target.closest('.pre');
   if (t) { S.tab = t.dataset.tab; try { history.replaceState(null, '', '#' + S.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); }
   if (p) { S.p = p.dataset.p; render(); }
+  const lv = e.target.closest('[data-lvl]'), so = e.target.closest('th[data-sort]');
+  if (lv) { S.lvl = lv.dataset.lvl; S.sort = { k: 'roas', d: -1 }; render(); }
+  if (so) { const k = so.dataset.sort; S.sort = S.sort.k === k ? { k, d: -S.sort.d } : { k, d: k === 'nome' ? 1 : -1 }; render(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'min') { S.min = +e.target.value; render(); }
+  if (e.target.id === 'meta') { const v = parseFloat(String(e.target.value).replace(',', '.')); if (v > 0) { METAROAS = v; try { localStorage.setItem('jeri_meta_roas', String(v)); } catch (x) {} render(); } }
 });
 $('#refresh').addEventListener('click', () => carregar(true));
 (function init() {
-  const h = location.hash.slice(1); if (['geral', 'pix', 'recusados', 'recuperacao'].includes(h)) S.tab = h;
+  const h = location.hash.slice(1); if (['geral', 'campanhas', 'pix', 'recusados', 'recuperacao'].includes(h)) S.tab = h;
   try { const c = localStorage.getItem('jeri_cache'); if (c) { D = normalizar(JSON.parse(c)); quando(); render(); } } catch (e) {}
   carregar(false);
   setInterval(() => carregar(false), 10 * 60 * 1000);
